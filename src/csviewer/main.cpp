@@ -27,7 +27,7 @@
 #include <cslogger.h>
 
 #include "csapplication.h"
-#include "viewerwindow.h"
+#include "cliwindow.h"
 #include "app_version.h"
 
 int main(int argc, char *argv[])
@@ -39,6 +39,11 @@ int main(int argc, char *argv[])
     logger.setLogRootDir(LOG_ROOT_DIR);
     logger.setLogPrefix(LOG_PREFIX);
 
+    bool suc = QObject::connect(&app, &QApplication::aboutToQuit, &logger,
+                                &CSLogger::onAboutToQuit, Qt::DirectConnection);
+    Q_ASSERT(suc);
+    CLIWindow w;
+
     logger.initialize();
 
     // application information
@@ -47,11 +52,7 @@ int main(int argc, char *argv[])
     qInfo() << "Applicaion Name : "     << APP_NAME;
     qInfo() << "Applicaion Version : "  << APP_VERSION;
     qInfo() << "****************************************";
-
-    QTextStream output(stdout);
-    QTextStream input(stdin);
-    while(1) {
-        output << "Scanning for cameras..." << Qt::endl;
-        return 0;
-    }
+    
+    cs::CSApplication::getInstance()->start();
+    return app.exec();
 }
