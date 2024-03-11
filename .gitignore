@@ -1,4 +1,6 @@
 build
+!build/build.sh
+!build/bin/script.sh
 .DS_Store
 /publish
 package

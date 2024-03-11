@@ -19,6 +19,7 @@
 
 #include <QApplication>
 #include <QFontDatabase>
+#include <QTextStream>
 #include <QDir>
 #include <QDebug>
 
@@ -46,4 +47,11 @@ int main(int argc, char *argv[])
     qInfo() << "Applicaion Name : "     << APP_NAME;
     qInfo() << "Applicaion Version : "  << APP_VERSION;
     qInfo() << "****************************************";
+
+    QTextStream output(stdout);
+    QTextStream input(stdin);
+    while(1) {
+        output << "Scanning for cameras..." << Qt::endl;
+        return 0;
+    }
 }
