@@ -18,9 +18,10 @@
 #include "appconfig.h"
 #include "csaction.h"
 
-CLIWindow::CLIWindow(QUrl url): m_url(url) {
+CLIWindow::CLIWindow(QUrl &url): m_url(url) {
     initConnections();
-    m_webSocket.open(QUrl(url));
+    qInfo() << "Opening WebSocket at " << url;
+    m_webSocket.open(url);
 }
 
 void CLIWindow::initConnections() {
@@ -161,6 +162,7 @@ void CLIWindow::onCameraStreamStopped() {
 }
 
 void CLIWindow::onAboutToQuit() {
+    qInfo() << "About to quit";
     m_webSocket.close();
     cs::CSApplication::getInstance()->stop();
 }

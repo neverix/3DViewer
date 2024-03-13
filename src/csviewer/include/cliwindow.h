@@ -13,7 +13,7 @@
 class CLIWindow: public QObject {
     Q_OBJECT
   public:
-   CLIWindow(QUrl url);
+   CLIWindow(QUrl &url);
 
   private:
    void initConnections();

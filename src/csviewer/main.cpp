@@ -29,8 +29,12 @@
 #include <cslogger.h>
 
 #include "csapplication.h"
+#define CLI_ONLY 1
 #include "cliwindow.h"
+#if CLI_ONLY
+#else
 #include "viewerwindow.h"
+#endif
 #include "app_version.h"
 
 int main(int argc, char *argv[])
@@ -73,10 +77,14 @@ int main(int argc, char *argv[])
     if (useWs) {
         QString url = parser.value(wsOption);
         QUrl wsUrl(url);
-        CLIWindow w(wsUrl);
+        CLIWindow *w = new CLIWindow(wsUrl);
     } else {
-        ViewerWindow w;
-        w.show();
+        #if CLI_ONLY
+        qInfo() << "GUI is not supported in this build.";
+        return 1;
+        #else
+        ViewerWindow *w = new ViewerWindow();
+        w->show();
 
         // set style and font
         QString stylePath = QString("%1/themes/global.css").arg(APP_PATH);
@@ -86,6 +94,7 @@ int main(int argc, char *argv[])
         qInfo() << "set style and font";
         CommonHelper::setStyle(stylePath);
         CommonHelper::setFont(fontPath);
+        #endif
     }
 
     return app.exec();
