@@ -18,8 +18,9 @@
 #include "appconfig.h"
 #include "csaction.h"
 
-CLIWindow::CLIWindow() {
+CLIWindow::CLIWindow(QUrl url): m_url(url) {
     initConnections();
+    m_webSocket.open(QUrl(url));
 }
 
 void CLIWindow::initConnections() {
@@ -33,6 +34,12 @@ void CLIWindow::initConnections() {
 
     suc &= (bool)connect(qApp, &QApplication::aboutToQuit, this,
                          &CLIWindow::onAboutToQuit);
+    
+    suc &= (bool)connect(&m_webSocket, &QWebSocket::connected, this,
+            &CLIWindow::onSocketConnected);
+    suc &= (bool)connect(&m_webSocket, &QWebSocket::disconnected, this, &CLIWindow::onSocketClosed);
+
+    Q_ASSERT(suc);
 }
 
 void CLIWindow::onCameraStateChanged(int state) {
@@ -153,4 +160,15 @@ void CLIWindow::onCameraStreamStopped() {
     //            &RenderWindow::onOutput2DUpdated);
 }
 
-void CLIWindow::onAboutToQuit() { cs::CSApplication::getInstance()->stop(); }
+void CLIWindow::onAboutToQuit() {
+    m_webSocket.close();
+    cs::CSApplication::getInstance()->stop();
+}
+
+void CLIWindow::onSocketConnected() {
+    qInfo() << "WebSocket connected";
+}
+
+void CLIWindow::onSocketClosed() {
+    qInfo() << "WebSocket closed";
+}

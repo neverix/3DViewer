@@ -30,6 +30,7 @@ find_package(Qt5
     Widgets
     OpenGL
     LinguistTools
+    WebSockets
     REQUIRED)
     
 if(Qt5_VERSION VERSION_LESS 5.10)

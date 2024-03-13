@@ -22,17 +22,33 @@
 #include <QTextStream>
 #include <QDir>
 #include <QDebug>
+#include <QtCore/QCommandLineParser>
+#include <QtCore/QCommandLineOption>
 
 #include <commonhelper.h>
 #include <cslogger.h>
 
 #include "csapplication.h"
 #include "cliwindow.h"
+#include "viewerwindow.h"
 #include "app_version.h"
 
 int main(int argc, char *argv[])
 { 
     QCoreApplication app(argc, argv);
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription("3D camera viewer");
+    parser.addHelpOption();
+
+    QCommandLineOption wsOption(
+        QStringList() << "w"
+                      << "websocket",
+        QCoreApplication::translate("main", "Set up web socket server at a URL instead of running a GUI."),
+        "url", "*");
+    parser.addOption(wsOption);
+    parser.process(app);
+    bool useWs = parser.isSet(wsOption);
 
     // initialize log
     CSLogger logger;
@@ -42,17 +58,35 @@ int main(int argc, char *argv[])
     bool suc = QObject::connect(&app, &QApplication::aboutToQuit, &logger,
                                 &CSLogger::onAboutToQuit, Qt::DirectConnection);
     Q_ASSERT(suc);
-    CLIWindow w;
 
     logger.initialize();
 
     // application information
     qInfo() << "";
     qInfo() << "****************************************";
-    qInfo() << "Applicaion Name : "     << APP_NAME;
-    qInfo() << "Applicaion Version : "  << APP_VERSION;
+    qInfo() << "Applicaion Name : " << APP_NAME;
+    qInfo() << "Applicaion Version : " << APP_VERSION;
     qInfo() << "****************************************";
-    
+
     cs::CSApplication::getInstance()->start();
+
+    if (useWs) {
+        QString url = parser.value(wsOption);
+        QUrl wsUrl(url);
+        CLIWindow w(wsUrl);
+    } else {
+        ViewerWindow w;
+        w.show();
+
+        // set style and font
+        QString stylePath = QString("%1/themes/global.css").arg(APP_PATH);
+        QString fontPath =
+            QString("%1/fonts/SourceHanSansCN-Regular.ttf").arg(APP_PATH);
+
+        qInfo() << "set style and font";
+        CommonHelper::setStyle(stylePath);
+        CommonHelper::setFont(fontPath);
+    }
+
     return app.exec();
 }

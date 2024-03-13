@@ -1326,4 +1326,12 @@ and the image quality of objects farther away may become worse.</source>
         <translation type="unfinished">构建于 %1</translation>
     </message>
 </context>
+<context>
+    <name>main</name>
+    <message>
+        <location filename="../main.cpp" line="47"/>
+        <source>Set up web socket server at a URL instead of running a GUI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
 </TS>

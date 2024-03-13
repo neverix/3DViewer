@@ -93,6 +93,7 @@ target_link_libraries(${TARGET_NAME}
     ${OSG_LIBRARY}
     Qt5::Widgets
     Qt5::OpenGL
+    Qt5::WebSockets
     csutil
     cscamera
     )
