@@ -48,8 +48,8 @@ int main(int argc, char *argv[])
     QCommandLineOption wsOption(
         QStringList() << "w"
                       << "websocket",
-        QCoreApplication::translate("main", "Set up web socket server at a URL instead of running a GUI."),
-        "url", "*");
+        QCoreApplication::translate("main", "Set up web socket server at a port instead of running a GUI."),
+        "port", "1234");
     parser.addOption(wsOption);
     parser.process(app);
     bool useWs = parser.isSet(wsOption);
@@ -75,9 +75,9 @@ int main(int argc, char *argv[])
     cs::CSApplication::getInstance()->start();
 
     if (useWs) {
-        QString url = parser.value(wsOption);
-        QUrl wsUrl(url);
-        CLIWindow *w = new CLIWindow(wsUrl);
+        QString wsPort = parser.value(wsOption);
+        quint16 port = wsPort.toUShort();
+        CLIWindow *w = new CLIWindow(port);
     } else {
         #if CLI_ONLY
         qInfo() << "GUI is not supported in this build.";

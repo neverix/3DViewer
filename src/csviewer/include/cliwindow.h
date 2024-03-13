@@ -8,17 +8,16 @@
 #include <QMap>
 #include <QVector>
 #include <hpp/Processing.hpp>
-#include <QtWebSockets/QWebSocket>
+#include <QtWebSockets/QWebSocketServer>
 
 class CLIWindow: public QObject {
     Q_OBJECT
   public:
-   CLIWindow(QUrl &url);
+   CLIWindow(quint16 port);
 
   private:
    void initConnections();
-   QWebSocket m_webSocket;
-   QUrl m_url;
+   QWebSocketServer m_webSocketServer;
 
   private slots:
     void onCameraStateChanged(int state);

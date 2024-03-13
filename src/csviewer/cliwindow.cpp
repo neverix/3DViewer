@@ -18,10 +18,12 @@
 #include "appconfig.h"
 #include "csaction.h"
 
-CLIWindow::CLIWindow(QUrl &url): m_url(url) {
+CLIWindow::CLIWindow(quint16 port) : m_webSocketServer(
+    QStringLiteral("CSViewer"), QWebSocketServer::NonSecureMode, this
+) {
     initConnections();
-    qInfo() << "Opening WebSocket at " << url;
-    m_webSocket.open(url);
+    qInfo() << "Opening WebSocket on port " << port;
+    m_webSocketServer.listen(QHostAddress::Any, port);
 }
 
 void CLIWindow::initConnections() {
@@ -35,10 +37,11 @@ void CLIWindow::initConnections() {
 
     suc &= (bool)connect(qApp, &QApplication::aboutToQuit, this,
                          &CLIWindow::onAboutToQuit);
-    
-    suc &= (bool)connect(&m_webSocket, &QWebSocket::connected, this,
-            &CLIWindow::onSocketConnected);
-    suc &= (bool)connect(&m_webSocket, &QWebSocket::disconnected, this, &CLIWindow::onSocketClosed);
+
+    suc &= (bool)connect(&m_webSocketServer, &QWebSocketServer::newConnection, this,
+                         &CLIWindow::onSocketConnected);
+    suc &= (bool)connect(&m_webSocketServer, &QWebSocketServer::closed, this,
+                         &CLIWindow::onSocketClosed);
 
     Q_ASSERT(suc);
 }
@@ -163,7 +166,7 @@ void CLIWindow::onCameraStreamStopped() {
 
 void CLIWindow::onAboutToQuit() {
     qInfo() << "About to quit";
-    m_webSocket.close();
+    m_webSocketServer.close();
     cs::CSApplication::getInstance()->stop();
 }
 
