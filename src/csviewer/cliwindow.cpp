@@ -34,6 +34,14 @@ void CLIWindow::initConnections() {
                          &CLIWindow::onCameraStateChanged);
     suc &= (bool)connect(app, &cs::CSApplication::removedCurrentCamera, this,
                          &CLIWindow::onRemovedCurrentCamera);
+    // suc &= (bool)connect(this, &CameraListWidget::connectCamera, app,
+    //                      &cs::CSApplication::connectCamera);
+    // suc &= (bool)connect(this, &CameraListWidget::disconnectCamera, app,
+    //                      &cs::CSApplication::disconnectCamera);
+    // suc &= (bool)connect(app, &cs::CSApplication::cameraListUpdated, this,
+    //                      &CameraListWidget::onCameraListUpdated);
+    // suc &= (bool)connect(app, &cs::CSApplication::cameraStateChanged, this,
+    //                      &CameraListWidget::onCameraStateChanged);
 
     suc &= (bool)connect(qApp, &QApplication::aboutToQuit, this,
                          &CLIWindow::onAboutToQuit);
