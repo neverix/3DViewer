@@ -34,14 +34,14 @@ void CLIWindow::initConnections() {
                          &CLIWindow::onCameraStateChanged);
     suc &= (bool)connect(app, &cs::CSApplication::removedCurrentCamera, this,
                          &CLIWindow::onRemovedCurrentCamera);
-    // suc &= (bool)connect(this, &CameraListWidget::connectCamera, app,
-    //                      &cs::CSApplication::connectCamera);
-    // suc &= (bool)connect(this, &CameraListWidget::disconnectCamera, app,
-    //                      &cs::CSApplication::disconnectCamera);
-    // suc &= (bool)connect(app, &cs::CSApplication::cameraListUpdated, this,
-    //                      &CameraListWidget::onCameraListUpdated);
-    // suc &= (bool)connect(app, &cs::CSApplication::cameraStateChanged, this,
-    //                      &CameraListWidget::onCameraStateChanged);
+    suc &= (bool)connect(this, &CLIWindow::connectCamera, app,
+                         &cs::CSApplication::connectCamera);
+    suc &= (bool)connect(this, &CLIWindow::disconnectCamera, app,
+                         &cs::CSApplication::disconnectCamera);
+    suc &= (bool)connect(app, &cs::CSApplication::cameraListUpdated, this,
+                         &CLIWindow::onCameraListUpdated);
+    suc &= (bool)connect(app, &cs::CSApplication::cameraStateChanged, this,
+                         &CLIWindow::onCameraStateChanged);
 
     suc &= (bool)connect(qApp, &QApplication::aboutToQuit, this,
                          &CLIWindow::onAboutToQuit);
@@ -151,9 +151,9 @@ void CLIWindow::onCameraStreamStarted() {
     // onRenderWindowUpdated();
 
     bool suc = true;
-    // suc &= (bool)connect(app, &cs::CSApplication::output3DUpdated,
-    //                      m_ui->renderWindow, &RenderWindow::onOutput3DUpdated,
-    //                      Qt::QueuedConnection);
+    suc &= (bool)connect(app, &cs::CSApplication::output3DUpdated,
+                         this, &CLIWindow::onOutput3DUpdated,
+                         Qt::QueuedConnection);
     // suc &= (bool)connect(app, &cs::CSApplication::output2DUpdated,
     //                      m_ui->renderWindow, &RenderWindow::onOutput2DUpdated,
     //                      Qt::QueuedConnection);
@@ -180,8 +180,74 @@ void CLIWindow::onAboutToQuit() {
 
 void CLIWindow::onSocketConnected() {
     qInfo() << "WebSocket connected";
+    QWebSocket* pSocket = m_webSocketServer.nextPendingConnection();
+
+    connect(pSocket, &QWebSocket::textMessageReceived, this,
+            &CLIWindow::processTextMessage);
+    connect(pSocket, &QWebSocket::disconnected, this,
+            &CLIWindow::socketDisconnected);
+
+    m_clients << pSocket;
+}
+
+void CLIWindow::processTextMessage(QString message) {
+    QWebSocket* pClient = qobject_cast<QWebSocket*>(sender());
+    qInfo() << "Message received:" << message;
+    if (pClient) {
+        pClient->sendTextMessage(message);
+    }
+}
+
+void CLIWindow::socketDisconnected() {
+    QWebSocket* pClient = qobject_cast<QWebSocket*>(sender());
+    qInfo() << "socketDisconnected:" << pClient;
+    if (pClient) {
+        m_clients.removeAll(pClient);
+        pClient->deleteLater();
+    }
 }
 
 void CLIWindow::onSocketClosed() {
     qInfo() << "WebSocket closed";
+}
+
+void CLIWindow::onOutput3DUpdated(cs::Pointcloud pointCloud,
+                                     const QImage& image) {
+    // RenderWidget3D* widget =
+    //     qobject_cast<RenderWidget3D*>(renderWidgets[CAMERA_DATA_POINT_CLOUD]);
+    // if (widget) {
+    //     if (!widget->isHidden()) {
+    //         widget->onRenderDataUpdated(pointCloud, image);
+    //     }
+    // }
+}
+
+void CLIWindow::onCameraListUpdated(const QStringList infoList) {
+    const int size = infoList.size();
+    auto curCameraSerial = QString(cs::CSApplication::getInstance()
+                                       ->getCamera()
+                                       ->getCameraInfo()
+                                       .cameraInfo.serial);
+
+    // m_ui->cameraListWidget->clear();
+    m_cameraList.clear();
+    // int curSelect = -1;
+    for (int i = 0; i < size; i++) {
+        const QString& info = infoList.at(i);
+        // addListWidgetItem(info);
+
+        // if (!curCameraSerial.isEmpty() && info.contains(curCameraSerial)) {
+        //     curSelect = i;
+        // }
+        m_cameraList.append(info);
+    }
+
+    // if (curSelect >= 0) {
+    //     QListWidgetItem* item = m_ui->cameraListWidget->item(curSelect);
+    //     QWidget* itemWidget = m_ui->cameraListWidget->itemWidget(item);
+    //     CSListItem* csItem = qobject_cast<CSListItem*>(itemWidget);
+    //     if (csItem) {
+    //         csItem->setSelected(true);
+    //     }
+    // }
 }

@@ -8,6 +8,7 @@
 #include <QMap>
 #include <QVector>
 #include <hpp/Processing.hpp>
+#include <QtWebSockets/QWebSocket>
 #include <QtWebSockets/QWebSocketServer>
 
 class CLIWindow: public QObject {
@@ -18,16 +19,25 @@ class CLIWindow: public QObject {
   private:
    void initConnections();
    QWebSocketServer m_webSocketServer;
+   QStringList m_cameraList;
+   QList<QWebSocket*> m_clients;
 
   private slots:
-    void onCameraStateChanged(int state);
-    void onRemovedCurrentCamera(QString serial);
-    void onCameraStreamStarted();
-    void onCameraStreamStopped();
-    void onAboutToQuit();
+   void onCameraListUpdated(const QStringList infoList);
+   void onCameraStateChanged(int state);
+   void onRemovedCurrentCamera(QString serial);
+   void onCameraStreamStarted();
+   void onCameraStreamStopped();
+   void onAboutToQuit();
+   void onSocketConnected();
+   void onSocketClosed();
+   void onOutput3DUpdated(cs::Pointcloud pointCloud, const QImage& image);
+   void processTextMessage(QString message);
+   void socketDisconnected();
 
-    void onSocketConnected();
-    void onSocketClosed();
+  signals:
+   void connectCamera(QString serial);
+   void disconnectCamera();
 };
 
 #endif  // _CS_CLIWINDOW_H
