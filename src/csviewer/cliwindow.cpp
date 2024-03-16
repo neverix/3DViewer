@@ -7,6 +7,8 @@
 #include <QTranslator>
 #include <QThread>
 #include <QMessageBox>
+#include <QJsonDocument>
+#include <QJsonArray>
 
 #include <cstypes.h>
 #include <icscamera.h>
@@ -193,7 +195,29 @@ void CLIWindow::onSocketConnected() {
 void CLIWindow::processTextMessage(QString message) {
     QWebSocket* pClient = qobject_cast<QWebSocket*>(sender());
     qInfo() << "Message received:" << message;
-    if (pClient) {
+    if (!pClient) {
+        qInfo() << "No client found";
+        return;
+    }
+    // depending on the first character, do something
+    if (message.startsWith("C")) {
+        // connect to camera
+        QString serial = message.mid(1);
+        emit connectCamera(serial);
+    } else if (message.startsWith("D")) {
+        // disconnect from camera
+        emit disconnectCamera();
+    } else if (message.startsWith("L")) {
+        // list cameras
+        QJsonArray cameraList;
+        for (const QString& camera : m_cameraList) {
+            cameraList.append(camera);
+        }
+        QJsonDocument jsonDoc;
+        jsonDoc.setArray(cameraList);
+        pClient->sendTextMessage(jsonDoc.toJson());
+    } else {
+        qInfo() << "Pong";
         pClient->sendTextMessage(message);
     }
 }
