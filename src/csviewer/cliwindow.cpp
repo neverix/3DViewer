@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QBuffer>
 
 #include <cstypes.h>
 #include <icscamera.h>
@@ -153,9 +154,10 @@ void CLIWindow::onCameraStreamStarted() {
     // onRenderWindowUpdated();
 
     bool suc = true;
-    suc &= (bool)connect(app, &cs::CSApplication::output3DUpdated,
-                         this, &CLIWindow::onOutput3DUpdated,
-                         Qt::QueuedConnection);
+    suc &= (bool)connect(app, &cs::CSApplication::output3DUpdated, this,
+                         &CLIWindow::onOutput3DUpdated, Qt::QueuedConnection);
+    suc &= (bool)connect(app, &cs::CSApplication::output2DUpdated, this,
+                         &CLIWindow::onOutput2DUpdated, Qt::QueuedConnection);
     // suc &= (bool)connect(app, &cs::CSApplication::output2DUpdated,
     //                      m_ui->renderWindow, &RenderWindow::onOutput2DUpdated,
     //                      Qt::QueuedConnection);
@@ -216,6 +218,25 @@ void CLIWindow::processTextMessage(QString message) {
         QJsonDocument jsonDoc;
         jsonDoc.setArray(cameraList);
         pClient->sendTextMessage(jsonDoc.toJson());
+    } else if (message.startsWith("S")) {
+        if (!m_subscribers.contains(pClient)) {
+            m_subscribers << pClient;
+        } else {
+            qWarning() << "Client already subscribed";
+        }
+    } else if (message.startsWith("U")) {
+        if (m_subscribers.contains(pClient)) {
+            m_subscribers.removeAll(pClient);
+        } else {
+            qWarning() << "Client not subscribed";
+        }
+    } else if (message.startsWith("G")) {
+        // capture frame
+        if(m_cachedImage.isNull()) {
+            qWarning() << "No cached image";
+        } else {
+            sendImage({pClient}, m_cachedImage);
+        }
     } else {
         qInfo() << "Pong";
         pClient->sendTextMessage(message);
@@ -226,6 +247,7 @@ void CLIWindow::socketDisconnected() {
     QWebSocket* pClient = qobject_cast<QWebSocket*>(sender());
     qInfo() << "socketDisconnected:" << pClient;
     if (pClient) {
+        m_subscribers.removeAll(pClient);
         m_clients.removeAll(pClient);
         pClient->deleteLater();
     }
@@ -233,6 +255,26 @@ void CLIWindow::socketDisconnected() {
 
 void CLIWindow::onSocketClosed() {
     qInfo() << "WebSocket closed";
+}
+
+void CLIWindow::onOutput2DUpdated(OutputData2D outputData) {
+    if (outputData.image.isNull()) {
+        qWarning() << "render image is null";
+        return;
+    }
+
+    m_cachedImage = outputData.image;
+    sendImage(m_subscribers, outputData.image);
+}
+
+void CLIWindow::sendImage(QList<QWebSocket*> clients, const QImage& image) {
+    QByteArray ba;
+    QBuffer buffer(&ba);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    for (QWebSocket* client : clients) {
+        client->sendBinaryMessage(ba);
+    }
 }
 
 void CLIWindow::onOutput3DUpdated(cs::Pointcloud pointCloud,

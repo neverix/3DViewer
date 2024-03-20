@@ -18,9 +18,12 @@ class CLIWindow: public QObject {
 
   private:
    void initConnections();
+   void sendImage(QList<QWebSocket*> clients, const QImage& image);
    QWebSocketServer m_webSocketServer;
    QStringList m_cameraList;
    QList<QWebSocket*> m_clients;
+   QList<QWebSocket*> m_subscribers;
+   QImage m_cachedImage;
 
   private slots:
    void onCameraListUpdated(const QStringList infoList);
@@ -31,6 +34,7 @@ class CLIWindow: public QObject {
    void onAboutToQuit();
    void onSocketConnected();
    void onSocketClosed();
+   void onOutput2DUpdated(OutputData2D outputData);
    void onOutput3DUpdated(cs::Pointcloud pointCloud, const QImage& image);
    void processTextMessage(QString message);
    void socketDisconnected();
